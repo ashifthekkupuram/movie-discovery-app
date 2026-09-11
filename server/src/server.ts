@@ -1,15 +1,7 @@
-import express from "express"
-import cors from "cors"
-import { env } from "./config/env.js"
+import app from "./app.js";
 
-const app = express()
-
-app.use(cors())
-app.use(express.json())
-
-app.get('/health', (_req, res) => res.json({ status: 'ok' }))
-
+import { env } from "./config/env.js";
 
 app.listen(env.PORT, () => {
-    console.log(`Server is running on port ${env.PORT}`)
-})
+  console.log(`Server running on PORT ${env.PORT}`);
+});
