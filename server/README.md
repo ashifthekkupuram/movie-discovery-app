@@ -24,8 +24,11 @@ app's own shape (see `src/types/movie.ts`).
 Movies:
 - `GET /api/movies/browse?page=&genreId=&sortBy=` — popular by default, or
   filtered/sorted discovery when `genreId`/`sortBy` are present
+- `GET /api/movies/trending` — daily trending movies, used for Search's
+  pre-typing suggestions
 - `GET /api/movies/search?q=&page=`
 - `GET /api/movies/:id`
+- `GET /api/movies/:id/similar` — related movies shown on the details screen
 - `GET /api/movies/genres`
 
 Wishlist (all require an `X-Device-Id` header):
@@ -39,9 +42,9 @@ Wishlist (all require an `X-Device-Id` header):
 - Abstraction layer: controllers never expose raw TMDB fields; everything
   goes through `tmdb.service.ts`'s normalizers.
 - Caching: Redis, keyed by endpoint + params, list TTL 5min / details TTL
-  30min / genres 24h. Absorbs repeated identical requests and keeps us under
-  TMDB's rate limit. Cache read/write failures fall through to a live fetch
-  rather than breaking the request.
+  30min / trending 1h / genres 24h. Absorbs repeated identical requests and
+  keeps us under TMDB's rate limit. Cache read/write failures fall through
+  to a live fetch rather than breaking the request.
 - Retries: TMDB calls retry transient failures (timeouts, 429, 5xx) with
   exponential backoff; 4xx errors fail fast since retrying won't help.
 - Wishlist identity: no auth in scope. The client generates a device UUID on
@@ -51,6 +54,9 @@ Wishlist (all require an `X-Device-Id` header):
 - Wishlist persistence: rows store a snapshot of title/poster/rating instead
   of only a movie ID, so the wishlist still renders correctly even if TMDB is
   slow or temporarily unreachable.
+- Trending vs Browse use different TMDB endpoints (`/trending/movie/day` vs
+  `/movie/popular` / `/discover/movie`) so Search's suggestions and Browse's
+  grid show genuinely different content rather than duplicating each other.
 
 ## Known limitations / would improve with more time
 

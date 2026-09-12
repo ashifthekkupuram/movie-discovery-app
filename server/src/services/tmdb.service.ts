@@ -134,6 +134,23 @@ export async function fetchMovieDetails(id: number): Promise<MovieDetails> {
   }
 }
 
+export async function fetchSimilarMovies(
+  id: number,
+  page = 1
+): Promise<PaginatedResult<MovieSummary>> {
+  const { data } = await requestWithRetry(() =>
+    client.get(`/movie/${id}/similar`, { params: { page } })
+  );
+  return toPaginated(data);
+}
+
+export async function fetchTrending(page = 1): Promise<PaginatedResult<MovieSummary>> {
+  const { data } = await requestWithRetry(() =>
+    client.get("/trending/movie/day", { params: { page } })
+  );
+  return toPaginated(data);
+}
+
 export async function fetchGenres(): Promise<Genre[]> {
   const { data } = await requestWithRetry(() => client.get("/genre/movie/list"));
   return data.genres ?? [];

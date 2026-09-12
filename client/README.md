@@ -1,56 +1,54 @@
-# Welcome to your Expo app 👋
+# Movie Discovery Client
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+React Native (Expo) app for browsing, searching, and saving movies. Talks
+only to the backend in `server/` — never directly to TMDB.
 
-## Get started
+## Setup
 
-1. Install dependencies
-
-   ```bash
-   npm install
+1. Make sure the backend is running first (see `server/README.md`).
+2. Copy `.env.example` to `.env` and set `EXPO_PUBLIC_API_URL` to your
+   machine's address, e.g.:
    ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
+   EXPO_PUBLIC_API_URL=http://<your-machine-ip>:4000/api
    ```
+   Use your machine's LAN IP (not `localhost`) if testing on a physical
+   device, or `10.0.2.2` if testing on an Android emulator. If your network
+   changes (e.g. switching to a phone hotspot), update this and restart
+   with the cache cleared (`npx expo start -c`), since Expo env vars are
+   baked in at start time, not hot-reloaded.
+3. `npm install`
+4. `npx expo start`
 
-In the output, you'll find options to open the app in a
+## Screens
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- **Browse** — movie grid with category filters and sort options, infinite
+  scroll, pull-to-refresh, retry on error.
+- **Search** — debounced search with in-flight request cancellation; shows
+  trending movies as suggestions before the user types anything.
+- **Movie details** — overview, genres, wishlist toggle, similar movies.
+- **Wishlist** — saved movies, persisted on the backend so it survives
+  closing and reopening the app.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Key decisions
 
-## Get a fresh project
+- **Identity**: no auth in scope. A device UUID is generated on first launch
+  (`expo-secure-store`) and sent as `X-Device-Id` on wishlist requests.
+- **Search**: input is debounced (400ms) and in-flight requests are
+  cancelled via `AbortController` when the query changes before the
+  previous request resolves, so stale results can't overwrite newer ones.
+- **Browse filters**: the same cancellation pattern applies to
+  category/sort changes — switching filters quickly won't show a flash of
+  the previous filter's results.
+- **Pagination**: results are de-duplicated by movie ID when appending
+  pages, since TMDB doesn't guarantee no overlap between adjacent pages.
+- **Fallbacks**: missing posters/backdrops fall back to a styled panel with
+  the movie title rather than a blank space; movies with no similar-movie
+  results simply omit that section rather than showing an empty one.
 
-When you're ready, run:
+## Known limitations / would improve with more time
 
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Only tested on one screen size/emulator; broader device testing not done.
+- Wishlist status on the details screen is re-fetched from the full
+  wishlist on every screen open rather than using shared state — fine at
+  this scale, would revisit with a proper data-fetching/cache layer
+  (e.g. React Query) if the app grew.

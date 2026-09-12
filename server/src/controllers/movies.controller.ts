@@ -9,6 +9,8 @@ import {
   fetchGenres,
   fetchMovieDetails,
   searchMovies,
+  fetchSimilarMovies,
+  fetchTrending,
 } from "../services/tmdb.service.js";
 
 const browseQuerySchema = z.object({
@@ -113,3 +115,32 @@ export const getGenres = async (
     next(err);
   }
 };
+
+export const getSimilarMovies = async(req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = idParamSchema.parse(req.params);
+    const cacheKey = buildCacheKey("movies:similar", { id });
+
+    const { data, cached } = await getOrSet(cacheKey, env.CACHE_TTL_LIST, () =>
+      fetchSimilarMovies(id)
+    );
+
+    res.set("X-Cache", cached ? "HIT" : "MISS");
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getTrending(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const cacheKey = "movies:trending";
+    
+    const { data, cached } = await getOrSet(cacheKey, 3600, () => fetchTrending(1));
+    
+    res.set("X-Cache", cached ? "HIT" : "MISS");
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+}

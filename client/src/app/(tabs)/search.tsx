@@ -9,7 +9,7 @@ import {
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
 
-import { searchMovies } from "@/services/movies";
+import { browseMovies, getTrending, searchMovies } from "@/services/movies";
 import useDebounce from "@/hooks/useDebounce";
 import MovieCard from "@/components/MovieCard";
 import type { MovieSummary } from "@/types/movie";
@@ -27,6 +27,9 @@ const SearchScreen = () => {
 
   const [searched, setSearched] = useState<boolean>(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  const [suggestions, setSuggestions] = useState<MovieSummary[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const trimmed = debouncedQuery.trim();
@@ -59,6 +62,15 @@ const SearchScreen = () => {
 
     return () => controller.abort();
   }, [debouncedQuery]);
+
+  useEffect(() => {
+    getTrending()
+      .then((data) => setSuggestions(data.results))
+      .catch(() => {})
+      .finally(() => {
+        setSuggestionsLoading(false);
+      });
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -99,6 +111,28 @@ const SearchScreen = () => {
           )}
         />
       )}
+      {!debouncedQuery.trim() && (
+        <>
+          <Text style={styles.sectionLabel}>Trending today</Text>
+          {suggestionsLoading ? (
+            <ActivityIndicator color="#fff" style={{ marginTop: 24 }} />
+          ) : (
+            <FlatList
+              data={suggestions}
+              keyExtractor={(item) => String(item.id)}
+              numColumns={2}
+              columnWrapperStyle={styles.row}
+              contentContainerStyle={styles.list}
+              renderItem={({ item }) => (
+                <MovieCard
+                  movie={item}
+                  onPress={() => router.push(`/movie/${item.id}`)}
+                />
+              )}
+            />
+          )}
+        </>
+      )}
     </View>
   );
 };
@@ -117,6 +151,14 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: 12 },
   row: { justifyContent: "space-between" },
   message: { color: "#999", textAlign: "center", marginTop: 24 },
+  sectionLabel: {
+    color: "#999",
+    fontSize: 13,
+    fontWeight: "600",
+    paddingHorizontal: 12,
+    marginTop: 8,
+    marginBottom: 12,
+  },
 });
 
 export default SearchScreen;

@@ -14,6 +14,7 @@ import {
   removeFromWishlist,
   type WishlistItem,
 } from "@/services/wishlist";
+import WishlistCard from "@/components/WishlistCart";
 
 const WishlistScreen = () => {
   const router = useRouter();
@@ -97,40 +98,16 @@ const WishlistScreen = () => {
         refreshing={refreshing}
         onRefresh={handleRefresh}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.row}
+          <WishlistCard
+            wishlist={item}
             onPress={() =>
               router.push({
                 pathname: "/movie/[id]",
                 params: { id: item.movieId },
               })
             }
-          >
-            {item.posterPath ? (
-              <Image
-                source={{ uri: item.posterPath }}
-                style={styles.poster}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={[styles.poster, styles.posterFallback]} />
-            )}
-            <View style={styles.info}>
-              <Text style={styles.title} numberOfLines={2}>
-                {item.title}
-              </Text>
-              <Text style={styles.meta}>
-                {item.releaseDate ?? "—"}{" "}
-                {item.voteAverage ? `· ★ ${item.voteAverage}` : ""}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => handleRemove(item.movieId)}
-              style={styles.removeButton}
-            >
-              <Text style={styles.removeText}>Remove</Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
+            handleRemove={() => handleRemove(item.movieId)}
+          />
         )}
       />
     </View>
@@ -146,24 +123,9 @@ const styles = StyleSheet.create({
   },
   container: { flex: 1, backgroundColor: "#111" },
   list: { padding: 12 },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1a1a1a",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 8,
-  },
-  info: { flex: 1, marginLeft: 10 },
-  title: { color: "#fff", fontSize: 15, fontWeight: "600" },
-  meta: { color: "#999", fontSize: 12, marginTop: 2 },
-  removeButton: { paddingHorizontal: 10, paddingVertical: 6 },
-  removeText: { color: "#f66", fontSize: 13 },
   errorText: { color: "#f66", textAlign: "center", paddingHorizontal: 24 },
   emptyText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   emptySubtext: { color: "#999", fontSize: 13, marginTop: 4 },
-  poster: { width: 50, height: 75, borderRadius: 6, backgroundColor: "#222" },
-  posterFallback: { backgroundColor: "#222" },
   retryButton: {
     marginTop: 12,
     backgroundColor: "#222",

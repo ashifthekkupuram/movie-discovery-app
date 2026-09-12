@@ -10,11 +10,36 @@ const TabsLayout = () => {
         tabBarStyle: { backgroundColor: "#111", borderTopColor: "#222" },
         tabBarActiveTintColor: "#fff",
         tabBarInactiveTintColor: "#666",
+        sceneStyle: { backgroundColor: "#111" },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Browse", tabBarIcon: ({ color, size }) => <Ionicons name="film-outline" size={size} color={color} />, }} />
-      <Tabs.Screen name="search" options={{ title: "Search", tabBarIcon: ({ color, size }) => <Ionicons name="search-outline" size={size} color={color} />, }} />
-      <Tabs.Screen name="wishlist" options={{ title: "Wishlist", tabBarIcon: ({ color, size }) => <Ionicons name="heart-outline" size={size} color={color} />, }} />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Browse",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="film-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="search"
+        options={{
+          title: "Search",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="search-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="wishlist"
+        options={{
+          title: "Wishlist",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="heart-outline" size={size} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 };

@@ -35,6 +35,16 @@ export async function getMovieDetails(id: number): Promise<MovieDetails> {
   return data;
 }
 
+export async function getSimilarMovies(id: number): Promise<PaginatedResult<MovieSummary>> {
+  const { data } = await api.get(`/movies/${id}/similar`);
+  return data;
+}
+
+export async function getTrending(): Promise<PaginatedResult<MovieSummary>> {
+  const { data } = await api.get("/movies/trending");
+  return data;
+}
+
 export async function getGenres(): Promise<Genre[]> {
   const { data } = await api.get("/movies/genres");
   return data;

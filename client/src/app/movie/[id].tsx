@@ -7,16 +7,17 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  FlatList,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
-import { getMovieDetails } from "@/services/movies";
+import { getMovieDetails, getSimilarMovies } from "@/services/movies";
 import {
   getWishlist,
   addToWishlist,
   removeFromWishlist,
 } from "@/services/wishlist";
-import type { MovieDetails } from "@/types/movie";
+import type { MovieDetails, MovieSummary } from "@/types/movie";
 
 const MovieDetailsScreen = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -31,13 +32,20 @@ const MovieDetailsScreen = () => {
   const [inWishlist, setInWishlist] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
 
+  const [similar, setSimilar] = useState<MovieSummary[]>([]);
+
   useEffect(() => {
     const movieId = Number(id);
 
-    Promise.all([getMovieDetails(movieId), getWishlist()])
-      .then(([details, wishlist]) => {
+    Promise.all([
+      getMovieDetails(movieId),
+      getWishlist(),
+      getSimilarMovies(movieId),
+    ])
+      .then(([details, wishlist, similarData]) => {
         setMovie(details);
         setInWishlist(wishlist.some((w) => w.movieId === movieId));
+        setSimilar(similarData.results);
       })
       .catch((err) => setError(err.message ?? "Something went wrong"))
       .finally(() => setLoading(false));
@@ -140,7 +148,47 @@ const MovieDetailsScreen = () => {
                 : "+ Add to Wishlist"}
           </Text>
         </TouchableOpacity>
+        <Text style={styles.overview}>
+          {movie.overview || "No overview available."}
+        </Text>
       </View>
+      { similar.length > 0 && (
+        <View style={styles.similarSection}>
+          <Text style={styles.similarLabel}>You might also like</Text>
+          <FlatList
+            data={similar}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => String(item.id)}
+            contentContainerStyle={styles.similarList}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.similarCard}
+                onPress={() => router.push({  pathname: '/movie/[id]', params: { id: item.id }})}
+              >
+                {item.posterUrl ? (
+                  <Image
+                    source={{ uri: item.posterUrl }}
+                    style={styles.similarPoster}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View
+                    style={[styles.similarPoster, styles.similarPosterFallback]}
+                  >
+                    <Text style={styles.similarFallbackText} numberOfLines={3}>
+                      {item.title}
+                    </Text>
+                  </View>
+                )}
+                <Text style={styles.similarTitle} numberOfLines={2}>
+                  {item.title}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      )}
     </ScrollView>
   );
 };
@@ -190,6 +238,23 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
   },
+  similarSection: { marginTop: 20, paddingHorizontal: 16, marginBottom: 24 },
+  similarLabel: { color: "#fff", fontSize: 15, fontWeight: "700", marginBottom: 10 },
+  similarList: { paddingRight: 16 },
+  similarCard: { width: 110, marginRight: 12 },
+  similarPoster: {
+    width: 110,
+    height: 165,
+    borderRadius: 8,
+    backgroundColor: "#222",
+  },
+  similarPosterFallback: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 6,
+  },
+  similarFallbackText: { color: "#999", textAlign: "center", fontSize: 10 },
+  similarTitle: { color: "#ccc", fontSize: 12, marginTop: 6 },
 });
 
 export default MovieDetailsScreen;
